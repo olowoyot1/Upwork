@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upwork Gig Pipeline — Temidayo Olowoyo</title>
+<style>
+  @font-face {
+    font-family: 'Source Serif 4';
+    src: local('Georgia'), local('Times New Roman');
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: Georgia, 'Times New Roman', serif;
+  }
+  body {
+    --ink: #1A2438;
+    --ink-soft: #2E3A52;
+    --parchment: #F7F3EA;
+    --parchment-dim: #EDE7D8;
+    --emerald: #3A7D5C;
+    --emerald-dim: #E8F0EA;
+    --rust: #C2703D;
+    --rust-dim: #F5E8DD;
+    --slate: #6B7280;
+    --brass: #B8923C;
+    --line: #D8D1BE;
+    --white: #FFFEFB;
+
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    background: var(--parchment);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  #app { display: flex; min-height: 100vh; }
+
+  .serif { font-family: Georgia, 'Times New Roman', serif; }
+  .mono { font-family: 'Courier New', Courier, monospace; }
+
+  /* ---- Rail ---- */
+  .rail {
+    width: 200px;
+    flex-shrink: 0;
+    background: var(--ink);
+    color: var(--parchment);
+    padding: 28px 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  .rail-brand {
+    padding: 0 24px 24px;
+    border-bottom: 1px solid rgba(247,243,234,0.12);
+    margin-bottom: 8px;
+  }
+  .rail-brand .name { font-family: Georgia, serif; font-size: 17px; font-weight: 600; letter-spacing: 0.2px; }
+  .rail-brand .tag { font-size: 11px; color: var(--brass); margin-top: 3px; letter-spacing: 0.4px; }
+  .rail-nav { display: flex; flex-direction: column; padding: 8px 0; }
+  .rail-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 11px 24px;
+    cursor: pointer;
+    color: rgba(247,243,234,0.6);
+    font-size: 13.5px;
+    border-left: 2px solid transparent;
+    transition: all 0.15s ease;
+    user-select: none;
+  }
+  .rail-item:hover { color: var(--parchment); background: rgba(247,243,234,0.04); }
+  .rail-item.active {
+    color: var(--parchment);
+    border-left: 2px solid var(--brass);
+    background: rgba(184,146,60,0.08);
+  }
+  .rail-item .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.5; flex-shrink: 0; }
+  .rail-item.active .dot { background: var(--brass); opacity: 1; }
+
+  .rail-foot {
+    margin-top: auto;
+    padding: 16px 24px 4px;
+    font-size: 10.5px;
+    color: rgba(247,243,234,0.35);
+    border-top: 1px solid rgba(247,243,234,0.1);
+  }
+
+  /* ---- Main ---- */
+  .main { flex: 1; min-width: 0; padding: 28px 36px 60px; }
+
+  /* Reconciliation strip - signature element */
+  .strip {
+    background: var(--ink);
+    border-radius: 3px;
+    padding: 18px 26px;
+    margin-bottom: 28px;
+    display: flex;
+    align-items: stretch;
+    position: relative;
+    overflow: hidden;
+  }
+  .strip::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--brass), var(--emerald), var(--rust));
+    opacity: 0.8;
+  }
+  .strip-cell { flex: 1; padding: 0 22px; position: relative; }
+  .strip-cell + .strip-cell { border-left: 1px solid rgba(247,243,234,0.12); }
+  .strip-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.8px; color: rgba(247,243,234,0.45); margin-bottom: 6px; }
+  .strip-value { font-family: 'Courier New', monospace; font-size: 26px; font-weight: 500; color: var(--parchment); line-height: 1; }
+  .strip-value .unit { font-size: 13px; color: rgba(247,243,234,0.4); margin-left: 4px; }
+  .strip-sub { font-size: 11px; color: rgba(247,243,234,0.4); margin-top: 5px; }
+  .strip-sub.up { color: var(--emerald); opacity: 0.9; }
+
+  h1.page-title { font-family: Georgia, serif; font-size: 22px; font-weight: 600; margin: 0 0 4px; }
+  .page-sub { color: var(--slate); font-size: 13px; margin-bottom: 24px; }
+
+  /* ---- Buttons ---- */
+  .btn {
+    font-family: inherit;
+    font-size: 13px; font-weight: 500;
+    padding: 9px 16px;
+    border-radius: 3px;
+    border: 1px solid var(--ink);
+    background: var(--ink);
+    color: var(--parchment);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .btn:hover { background: var(--ink-soft); }
+  .btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+  .btn.ghost:hover { background: var(--white); border-color: var(--ink); }
+  .btn.danger-ghost { background: transparent; color: var(--rust); border: 1px solid var(--rust); }
+  .btn.danger-ghost:hover { background: var(--rust-dim); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn.small { padding: 6px 11px; font-size: 12px; }
+
+  /* ---- Ledger rows (pipeline) ---- */
+  .ledger {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .ledger-head {
+    display: grid;
+    grid-template-columns: 1fr 130px 110px 90px 40px;
+    padding: 10px 18px;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--slate);
+    background: var(--parchment-dim);
+    border-bottom: 1px solid var(--line);
+  }
+  .ledger-row {
+    display: grid;
+    grid-template-columns: 1fr 130px 110px 90px 40px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--line);
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.12s ease;
+  }
+  .ledger-row:last-child { border-bottom: none; }
+  .ledger-row:hover { background: var(--parchment-dim); }
+  .ledger-job-title { font-weight: 500; font-size: 13.5px; margin-bottom: 2px; }
+  .ledger-job-meta { font-size: 11.5px; color: var(--slate); }
+  .ledger-rate { font-family: 'Courier New', monospace; font-size: 13px; }
+  .ledger-date { font-size: 12px; color: var(--slate); font-family: 'Courier New', monospace; }
+
+  .status-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 500;
+    padding: 4px 9px;
+    border-radius: 100px;
+    width: fit-content;
+  }
+  .status-pill .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+  .status-saved { background: #EEF0F3; color: var(--slate); }
+  .status-applied { background: #E5EEFA; color: #2E5C99; }
+  .status-interview { background: var(--rust-dim); color: var(--rust); }
+  .status-won { background: var(--emerald-dim); color: var(--emerald); }
+  .status-lost { background: #F4E5E5; color: #A14848; }
+
+  .empty-state { text-align: center; padding: 64px 24px; color: var(--slate); }
+  .empty-state .serif { font-size: 16px; color: var(--ink); margin-bottom: 6px; }
+  .empty-state p { font-size: 13px; margin: 0 0 18px; }
+
+  /* ---- Modal ---- */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(26,36,56,0.45);
+    display: flex; align-items: flex-start; justify-content: center;
+    padding: 40px 20px; z-index: 100; overflow-y: auto;
+  }
+  .modal {
+    background: var(--white);
+    border-radius: 4px;
+    max-width: 560px;
+    width: 100%;
+    padding: 28px 30px 26px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+  }
+  .modal h2 { font-family: Georgia, serif; font-size: 18px; margin: 0 0 18px; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12px; font-weight: 500; color: var(--ink-soft); margin-bottom: 5px; }
+  .field input, .field select, .field textarea {
+    width: 100%;
+    font-family: inherit;
+    font-size: 13.5px;
+    padding: 9px 11px;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    background: var(--parchment);
+    color: var(--ink);
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    outline: none; border-color: var(--brass); background: var(--white);
+  }
+  .field textarea { resize: vertical; min-height: 70px; font-family: inherit; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+
+  /* ---- Drafter ---- */
+  .drafter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+  .panel { background: var(--white); border: 1px solid var(--line); border-radius: 3px; padding: 20px; }
+  .panel-title { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--slate); margin-bottom: 12px; font-weight: 600; }
+  .draft-output { font-family: inherit; font-size: 13.5px; line-height: 1.65; white-space: pre-wrap; color: var(--ink); min-height: 200px; }
+  .draft-output.empty { color: var(--slate); font-style: italic; }
+  .copy-row { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
+  .char-count { font-size: 11px; color: var(--slate); font-family: 'Courier New', monospace; }
+
+  /* ---- Templates ---- */
+  .template-card { background: var(--white); border: 1px solid var(--line); border-radius: 3px; padding: 16px 18px; margin-bottom: 12px; }
+  .template-card-head { margin-bottom: 8px; }
+  .template-card-head .serif { font-size: 14.5px; font-weight: 600; }
+  .template-tag { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--brass); margin-bottom: 4px; }
+  .template-body { font-size: 13px; color: var(--ink-soft); white-space: pre-wrap; line-height: 1.55; }
+  .template-actions { display: flex; gap: 8px; margin-top: 10px; }
+
+  /* ---- Stats ---- */
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+  .stat-box { background: var(--white); border: 1px solid var(--line); border-radius: 3px; padding: 18px 20px; }
+  .stat-box .label { font-size: 11px; color: var(--slate); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .stat-box .value { font-family: 'Courier New', monospace; font-size: 28px; color: var(--ink); }
+  .funnel-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .funnel-label { width: 90px; font-size: 12.5px; color: var(--ink-soft); flex-shrink: 0; text-transform: capitalize; }
+  .funnel-track { flex: 1; height: 22px; background: var(--parchment-dim); border-radius: 2px; overflow: hidden; }
+  .funnel-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
+  .funnel-count { width: 34px; text-align: right; font-family: 'Courier New', monospace; font-size: 12.5px; flex-shrink: 0; }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: var(--parchment);
+    padding: 10px 20px; border-radius: 3px; font-size: 13px;
+    z-index: 200; box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+  }
+
+  .profile-snapshot { margin-bottom: 24px; }
+
+  @media (max-width: 720px) {
+    .rail { width: 64px; }
+    .rail-brand .name, .rail-brand .tag, .rail-item span.label, .rail-foot { display: none; }
+    .rail-brand { padding: 0 0 16px; text-align: center; }
+    .rail-item { justify-content: center; padding: 13px 0; }
+    .main { padding: 20px 16px 50px; }
+    .drafter-grid { grid-template-columns: 1fr; }
+    .field-row { grid-template-columns: 1fr; }
+    .ledger-head { display: none; }
+    .ledger-row { grid-template-columns: 1fr; gap: 6px; }
+    .stats-grid { grid-template-columns: 1fr; }
+    .strip { flex-direction: column; gap: 14px; padding: 16px 20px; }
+    .strip-cell + .strip-cell { border-left: none; border-top: 1px solid rgba(247,243,234,0.12); padding-top: 14px; }
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ---------- Profile (seeded from CV) ----------
+  var PROFILE = {
+    name: "Temidayo Olowoyo",
+    niche: "Finance & Accounting + ERP/Automation hybrid — rare combination of accounting depth (GAAP/IFRS, audit) and technical implementation (Zoho, PHP, automation, AI)."
+  };
+
+  var STORAGE_KEYS = { jobs: 'gigtool_jobs', templates: 'gigtool_templates' };
+
+  var DEFAULT_TEMPLATES = [
+    {
+      id: 't1',
+      tag: 'Opener — ERP/Accounting Setup',
+      title: 'ERP Implementation Opener',
+      body: "I noticed you're looking for help with {specific_need} — this sits right in my lane. I'm a certified Zoho Finance Plus Implementation Partner with 10+ years across accounting and ERP rollouts (Zoho, Oracle, Sage), and I also build the automation layer around the books (PHP, scripted workflows, AI-assisted reporting) so the system doesn't just go live, it actually runs itself."
+    },
+    {
+      id: 't2',
+      tag: 'Opener — Bookkeeping/Reconciliation',
+      title: 'Bookkeeping Cleanup Opener',
+      body: "Reconciliation backlogs and messy books are exactly what I get brought in to fix. In my current role I eliminated a multi-month reconciliation backlog and cut operational expenses by 12% by rebuilding the bookkeeping system from the ground up — happy to walk you through how I'd approach {specific_need}."
+    },
+    {
+      id: 't3',
+      tag: 'Closer — Standard',
+      title: 'Standard Closer',
+      body: "I'm available to start {availability} and can hop on a quick call this week if useful. Happy to share examples of similar reconciliation/ERP work I've delivered. Looking forward to hearing more about the project."
+    }
+  ];
+
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function esc(str) {
+    if (str === null || str === undefined) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // ---------- Storage ----------
+  function loadKey(key, fallback) {
+    try {
+      var raw = localStorage.getItem(key);
+      if (raw) return JSON.parse(raw);
+    } catch (e) { /* corrupted or missing */ }
+    return fallback;
+  }
+  function saveKey(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); }
+    catch (e) { console.error('Save failed', key, e); }
+  }
+
+  // ---------- State ----------
+  var state = {
+    view: 'pipeline',
+    jobs: loadKey(STORAGE_KEYS.jobs, []),
+    templates: loadKey(STORAGE_KEYS.templates, DEFAULT_TEMPLATES),
+    modalJob: null,        // job object being edited, or {} for new, or null
+    showJobModal: false,
+    editingTemplate: null, // template object being edited, or {} for new, or null
+    draft: { jobId: '', tone: 'confident', text: '' },
+    toastMsg: '',
+    toastTimer: null
+  };
+
+  function persistJobs() { saveKey(STORAGE_KEYS.jobs, state.jobs); }
+  function persistTemplates() { saveKey(STORAGE_KEYS.templates, state.templates); }
+
+  function showToast(msg) {
+    state.toastMsg = msg;
+    render();
+    if (state.toastTimer) clearTimeout(state.toastTimer);
+    state.toastTimer = setTimeout(function () {
+      state.toastMsg = '';
+      render();
+    }, 2200);
+  }
+
+  // ---------- Render helpers ----------
+  function statusPillHtml(status) {
+    var map = {
+      saved: ['status-saved', 'Saved'],
+      applied: ['status-applied', 'Applied'],
+      interview: ['status-interview', 'Interview'],
+      won: ['status-won', 'Won'],
+      lost: ['status-lost', 'Lost']
+    };
+    var s = map[status] || map.saved;
+    return '<span class="status-pill ' + s[0] + '"><span class="dot"></span>' + s[1] + '</span>';
+  }
+
+  function reconciliationStripHtml() {
+    var jobs = state.jobs;
+    var applied = jobs.filter(function (j) { return j.status !== 'saved'; }).length;
+    var interview = jobs.filter(function (j) { return j.status === 'interview' || j.status === 'won'; }).length;
+    var won = jobs.filter(function (j) { return j.status === 'won'; }).length;
+    var savedOnly = jobs.filter(function (j) { return j.status === 'saved'; }).length;
+    var responseRate = applied > 0 ? Math.round((interview / applied) * 100) : 0;
+    var winRate = applied > 0 ? Math.round((won / applied) * 100) : 0;
+    var pipelineValue = jobs.filter(function (j) { return j.status !== 'lost'; })
+      .reduce(function (sum, j) { return sum + (parseFloat(j.rate) || 0); }, 0);
+
+    return (
+      '<div class="strip">' +
+        '<div class="strip-cell"><div class="strip-label">Applied</div><div class="strip-value">' + applied + '</div>' +
+          '<div class="strip-sub">' + savedOnly + ' saved, not yet sent</div></div>' +
+        '<div class="strip-cell"><div class="strip-label">Interviews</div><div class="strip-value">' + interview + '</div>' +
+          '<div class="strip-sub up">' + responseRate + '% response rate</div></div>' +
+        '<div class="strip-cell"><div class="strip-label">Won</div><div class="strip-value">' + won + '</div>' +
+          '<div class="strip-sub up">' + winRate + '% win rate</div></div>' +
+        '<div class="strip-cell"><div class="strip-label">Pipeline value</div>' +
+          '<div class="strip-value mono">$' + pipelineValue.toLocaleString() + '<span class="unit">est</span></div>' +
+          '<div class="strip-sub">across active jobs</div></div>' +
+      '</div>'
+    );
+  }
+
+  function pipelineViewHtml() {
+    var jobs = state.jobs.slice().sort(function (a, b) { return new Date(b.dateAdded) - new Date(a.dateAdded); });
+    var html = '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;">' +
+      '<div><h1 class="page-title">Pipeline</h1>' +
+      '<div class="page-sub">Every job you\'ve seen, applied to, or won — in one ledger.</div></div>' +
+      '<button class="btn" data-action="add-job">+ Add job</button></div>';
+
+    if (jobs.length === 0) {
+      html += '<div class="ledger"><div class="empty-state">' +
+        '<div class="serif">No jobs logged yet</div>' +
+        '<p>Add a job to start tracking your pipeline.</p>' +
+        '<button class="btn" data-action="add-job">+ Add your first job</button>' +
+        '</div></div>';
+    } else {
+      html += '<div class="ledger"><div class="ledger-head"><div>Job</div><div>Status</div><div>Rate</div><div>Added</div><div></div></div>';
+      jobs.forEach(function (job) {
+        var rateStr = job.rate ? ('$' + parseFloat(job.rate).toLocaleString() + (job.rateType === 'hourly' ? '/hr' : '')) : '—';
+        html += '<div class="ledger-row" data-action="edit-job" data-id="' + job.id + '">' +
+          '<div><div class="ledger-job-title">' + esc(job.title || 'Untitled job') + '</div>' +
+          '<div class="ledger-job-meta">' + esc(job.client || '—') + '</div></div>' +
+          '<div>' + statusPillHtml(job.status) + '</div>' +
+          '<div class="ledger-rate">' + rateStr + '</div>' +
+          '<div class="ledger-date">' + esc(job.dateAdded) + '</div><div></div></div>';
+      });
+      html += '</div>';
+    }
+    return html;
+  }
+
+  function jobModalHtml() {
+    var job = state.modalJob;
+    if (!job) return '';
+    var isEdit = !!job.id && state.jobs.some(function (j) { return j.id === job.id; });
+    return (
+      '<div class="modal-overlay" data-action="close-modal-overlay">' +
+        '<div class="modal">' +
+          '<h2 class="serif">' + (isEdit ? 'Edit job' : 'Add a job') + '</h2>' +
+          '<div class="field"><label>Job title</label>' +
+            '<input id="f-title" value="' + esc(job.title) + '" placeholder="e.g. Zoho Books setup for logistics company"></div>' +
+          '<div class="field-row">' +
+            '<div class="field"><label>Client / company</label><input id="f-client" value="' + esc(job.client) + '" placeholder="Optional"></div>' +
+            '<div class="field"><label>Status</label><select id="f-status">' +
+              ['saved', 'applied', 'interview', 'won', 'lost'].map(function (s) {
+                return '<option value="' + s + '"' + (job.status === s ? ' selected' : '') + '>' + s.charAt(0).toUpperCase() + s.slice(1) + '</option>';
+              }).join('') +
+            '</select></div></div>' +
+          '<div class="field-row">' +
+            '<div class="field"><label>Rate ($)</label><input id="f-rate" type="number" value="' + esc(job.rate) + '" placeholder="e.g. 800"></div>' +
+            '<div class="field"><label>Rate type</label><select id="f-rateType">' +
+              '<option value="fixed"' + (job.rateType === 'fixed' ? ' selected' : '') + '>Fixed price</option>' +
+              '<option value="hourly"' + (job.rateType === 'hourly' ? ' selected' : '') + '>Hourly</option>' +
+            '</select></div></div>' +
+          '<div class="field"><label>Job post (paste full text — used for proposal drafting)</label>' +
+            '<textarea id="f-jobPost" placeholder="Paste the Upwork job description here...">' + esc(job.jobPost) + '</textarea></div>' +
+          '<div class="field"><label>Notes</label>' +
+            '<textarea id="f-notes" style="min-height:50px" placeholder="Follow-ups, client tone, anything to remember">' + esc(job.notes) + '</textarea></div>' +
+          '<div class="modal-actions">' +
+            (isEdit ? '<button class="btn danger-ghost" data-action="delete-job" data-id="' + job.id + '">Delete</button>' : '') +
+            '<button class="btn ghost" data-action="close-modal">Cancel</button>' +
+            '<button class="btn" data-action="save-job" data-id="' + esc(job.id) + '">' + (isEdit ? 'Save changes' : 'Add job') + '</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  function profileSnapshotHtml() {
+    return '<div class="panel profile-snapshot"><div class="panel-title">Your positioning</div>' +
+      '<div style="font-size:13px;color:var(--ink-soft);line-height:1.6;">' + esc(PROFILE.niche) + '</div></div>';
+  }
+
+  function drafterViewHtml() {
+    var jobs = state.jobs;
+    var selected = jobs.find(function (j) { return j.id === state.draft.jobId; });
+    var options = '<option value="">— select a job from your pipeline —</option>' +
+      jobs.map(function (j) { return '<option value="' + j.id + '"' + (j.id === state.draft.jobId ? ' selected' : '') + '>' + esc(j.title || 'Untitled job') + '</option>'; }).join('');
+
+    var html = '<h1 class="page-title">Proposal drafter</h1>' +
+      '<div class="page-sub">Pick a job, generate a tailored draft, edit it, then paste it into Upwork yourself.</div>' +
+      '<div class="drafter-grid">' +
+        '<div class="panel"><div class="panel-title">Source</div>' +
+          '<div class="field"><label>Which job is this for?</label><select id="d-jobSelect">' + options + '</select></div>';
+
+    if (selected) {
+      html += '<div class="field"><label>Job post excerpt</label>' +
+        '<div style="background:var(--parchment-dim);border:1px solid var(--line);border-radius:3px;padding:10px 12px;font-size:12.5px;color:var(--ink-soft);max-height:160px;overflow-y:auto;white-space:pre-wrap;">' +
+        esc(selected.jobPost || 'No job post text saved for this entry — edit the job in Pipeline to add it.') + '</div></div>';
+    }
+
+    html += '<div class="field"><label>Tone</label><select id="d-tone">' +
+        '<option value="confident"' + (state.draft.tone === 'confident' ? ' selected' : '') + '>Confident &amp; direct</option>' +
+        '<option value="warm"' + (state.draft.tone === 'warm' ? ' selected' : '') + '>Warm &amp; collaborative</option>' +
+      '</select></div>' +
+      '<button class="btn" style="width:100%;margin-top:4px;" data-action="generate-draft"' + (!selected ? ' disabled' : '') + '>Generate draft</button>';
+
+    if (jobs.length === 0) {
+      html += '<div style="font-size:12px;color:var(--slate);margin-top:10px;">Add a job in Pipeline first.</div>';
+    }
+    html += '</div>';
+
+    html += '<div class="panel"><div class="panel-title">Draft proposal</div>' +
+      '<div class="draft-output' + (!state.draft.text ? ' empty' : '') + '">' +
+      (state.draft.text ? esc(state.draft.text) : 'Your generated draft will appear here. Edit freely before sending — this is a starting point, not a final answer.') +
+      '</div>';
+    if (state.draft.text) {
+      html += '<div class="copy-row"><span class="char-count">' + state.draft.text.length + ' characters</span>' +
+        '<button class="btn small" data-action="copy-draft">Copy to clipboard</button></div>';
+    }
+    html += '</div></div>';
+    return html;
+  }
+
+  function generateDraft() {
+    var job = state.jobs.find(function (j) { return j.id === state.draft.jobId; });
+    if (!job) return;
+    var post = (job.jobPost || '').toLowerCase();
+    var angle = 'general accounting and ERP support';
+    if (post.indexOf('zoho') !== -1) angle = 'Zoho implementation and configuration';
+    else if (post.indexOf('reconcil') !== -1 || post.indexOf('bookkeep') !== -1) angle = 'bookkeeping cleanup and reconciliation';
+    else if (post.indexOf('automat') !== -1 || post.indexOf('php') !== -1 || post.indexOf('script') !== -1) angle = 'accounting automation and workflow scripting';
+    else if (post.indexOf('forecast') !== -1 || post.indexOf('budget') !== -1) angle = 'financial modelling and forecasting';
+    else if (post.indexOf('audit') !== -1 || post.indexOf('compliance') !== -1) angle = 'internal controls and audit-ready reporting';
+    else if (post.indexOf('ai') !== -1 || post.indexOf('dashboard') !== -1) angle = 'AI-assisted financial reporting and dashboards';
+
+    var opener = state.draft.tone === 'confident'
+      ? "Hi — this project lines up closely with what I do day to day. I'm a Finance Manager and Certified Zoho Finance Plus Implementation Partner with 10+ years across logistics, financial services, and retail, with a specific focus on " + angle + "."
+      : "Hi there, thanks for posting this — I'd love to help. I'm an accountant and ERP specialist (10+ years, certified Zoho Finance Plus partner) with hands-on experience in " + angle + ", which looks like a close match for what you need.";
+
+    var proof = "A couple of relevant results from recent work: cut operational expenses by 12% through targeted cost-saving measures, improved ERP data accuracy by 30%, and reduced financial risk by 40% through stronger internal controls. I also work comfortably with PHP, GitHub, and Vercel, so I can build the automation layer around the books, not just the books themselves.";
+    var closer = "Happy to jump on a quick call to talk through your specific setup, or share more detail on similar projects. Available to start right away.";
+
+    state.draft.text = opener + '\n\n' + proof + '\n\n' + closer + '\n\n— ' + PROFILE.name;
+  }
+
+  function templatesViewHtml() {
+    var html = '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;">' +
+      '<div><h1 class="page-title">Templates</h1>' +
+      '<div class="page-sub">Reusable openers and closers. Use <span class="mono">{specific_need}</span> and <span class="mono">{availability}</span> as fill-in variables.</div></div>' +
+      '<button class="btn" data-action="new-template">+ New template</button></div>';
+
+    state.templates.forEach(function (t) {
+      html += '<div class="template-card">' +
+        '<div class="template-card-head"><div class="template-tag">' + esc(t.tag) + '</div><div class="serif">' + esc(t.title) + '</div></div>' +
+        '<div class="template-body">' + esc(t.body) + '</div>' +
+        '<div class="template-actions">' +
+          '<button class="btn small ghost" data-action="copy-template" data-id="' + t.id + '">Copy</button>' +
+          '<button class="btn small ghost" data-action="edit-template" data-id="' + t.id + '">Edit</button>' +
+          '<button class="btn small danger-ghost" data-action="delete-template" data-id="' + t.id + '">Delete</button>' +
+        '</div></div>';
+    });
+
+    if (state.editingTemplate) {
+      var et = state.editingTemplate;
+      var isNew = !state.templates.some(function (t) { return t.id === et.id; });
+      html += '<div class="modal-overlay" data-action="close-template-modal-overlay">' +
+        '<div class="modal">' +
+          '<h2 class="serif">' + (isNew ? 'New template' : 'Edit template') + '</h2>' +
+          '<div class="field"><label>Tag (category)</label><input id="t-tag" value="' + esc(et.tag) + '" placeholder="e.g. Opener — Audit work"></div>' +
+          '<div class="field"><label>Title</label><input id="t-title" value="' + esc(et.title) + '" placeholder="Short internal name"></div>' +
+          '<div class="field"><label>Body</label><textarea id="t-body" style="min-height:140px">' + esc(et.body) + '</textarea></div>' +
+          '<div class="modal-actions">' +
+            '<button class="btn ghost" data-action="close-template-modal">Cancel</button>' +
+            '<button class="btn" data-action="save-template" data-id="' + esc(et.id) + '">Save template</button>' +
+          '</div></div></div>';
+    }
+    return html;
+  }
+
+  function statsViewHtml() {
+    var jobs = state.jobs;
+    var total = jobs.length;
+    var counts = {
+      saved: jobs.filter(function (j) { return j.status === 'saved'; }).length,
+      applied: jobs.filter(function (j) { return j.status === 'applied'; }).length,
+      interview: jobs.filter(function (j) { return j.status === 'interview'; }).length,
+      won: jobs.filter(function (j) { return j.status === 'won'; }).length,
+      lost: jobs.filter(function (j) { return j.status === 'lost'; }).length
+    };
+    var appliedTotal = total - counts.saved;
+    var responseRate = appliedTotal > 0 ? Math.round(((counts.interview + counts.won) / appliedTotal) * 100) : 0;
+    var winRate = appliedTotal > 0 ? Math.round((counts.won / appliedTotal) * 100) : 0;
+    var ratedJobs = jobs.filter(function (j) { return j.rate; });
+    var avgRate = ratedJobs.length > 0 ? Math.round(ratedJobs.reduce(function (s, j) { return s + (parseFloat(j.rate) || 0); }, 0) / ratedJobs.length) : 0;
+
+    var funnelColors = { saved: '#9CA3AF', applied: '#3E6FB5', interview: 'var(--rust)', won: 'var(--emerald)', lost: '#A14848' };
+    var maxCount = Math.max(1, counts.saved, counts.applied, counts.interview, counts.won, counts.lost);
+
+    var now = new Date();
+    var last7Days = jobs.filter(function (j) {
+      var d = new Date(j.dateAdded);
+      var diff = (now - d) / (1000 * 60 * 60 * 24);
+      return diff <= 7;
+    }).length;
+
+    var html = '<h1 class="page-title">Stats</h1><div class="page-sub">How your pipeline is actually performing.</div>' +
+      '<div class="stats-grid">' +
+        '<div class="stat-box"><div class="label">Response rate</div><div class="value">' + responseRate + '%</div></div>' +
+        '<div class="stat-box"><div class="label">Win rate</div><div class="value">' + winRate + '%</div></div>' +
+        '<div class="stat-box"><div class="label">Added this week</div><div class="value">' + last7Days + '</div></div>' +
+      '</div><div class="panel"><div class="panel-title">Pipeline funnel</div>';
+
+    ['saved', 'applied', 'interview', 'won', 'lost'].forEach(function (key) {
+      var pct = (counts[key] / maxCount) * 100;
+      html += '<div class="funnel-row"><div class="funnel-label">' + key + '</div>' +
+        '<div class="funnel-track"><div class="funnel-fill" style="width:' + pct + '%;background:' + funnelColors[key] + ';"></div></div>' +
+        '<div class="funnel-count">' + counts[key] + '</div></div>';
+    });
+
+    if (avgRate > 0) {
+      html += '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--slate);">' +
+        'Average rate across logged jobs: <span class="mono" style="color:var(--ink);">$' + avgRate.toLocaleString() + '</span></div>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  // ---------- Main render ----------
+  function render() {
+    var navItems = [
+      { key: 'pipeline', label: 'Pipeline' },
+      { key: 'drafter', label: 'Drafter' },
+      { key: 'templates', label: 'Templates' },
+      { key: 'stats', label: 'Stats' }
+    ];
+
+    var railNav = navItems.map(function (item) {
+      return '<div class="rail-item' + (state.view === item.key ? ' active' : '') + '" data-action="set-view" data-view="' + item.key + '">' +
+        '<span class="dot"></span><span class="label">' + item.label + '</span></div>';
+    }).join('');
+
+    var mainContent = '';
+    if (state.view === 'pipeline') mainContent = pipelineViewHtml();
+    else if (state.view === 'drafter') mainContent = profileSnapshotHtml() + drafterViewHtml();
+    else if (state.view === 'templates') mainContent = templatesViewHtml();
+    else if (state.view === 'stats') mainContent = statsViewHtml();
+
+    var html =
+      '<div class="rail">' +
+        '<div class="rail-brand"><div class="name serif">' + esc(PROFILE.name.split(' ')[0]) + "'s Desk</div>" +
+        '<div class="tag">UPWORK LEDGER</div></div>' +
+        '<div class="rail-nav">' + railNav + '</div>' +
+        '<div class="rail-foot">All submissions happen on Upwork — this tool drafts, tracks, never auto-applies.</div>' +
+      '</div>' +
+      '<div class="main">' + reconciliationStripHtml() + mainContent + '</div>' +
+      jobModalHtml() +
+      (state.toastMsg ? '<div class="toast">' + esc(state.toastMsg) + '</div>' : '');
+
+    document.getElementById('app').innerHTML = html;
+    attachHandlers();
+  }
+
+  // ---------- Event delegation ----------
+  function attachHandlers() {
+    var app = document.getElementById('app');
+
+    app.querySelectorAll('[data-action]').forEach(function (el) {
+      var action = el.getAttribute('data-action');
+      el.addEventListener('click', function (ev) {
+        handleAction(action, el, ev);
+      });
+    });
+
+    var jobSelect = document.getElementById('d-jobSelect');
+    if (jobSelect) {
+      jobSelect.addEventListener('change', function () {
+        state.draft.jobId = this.value;
+        state.draft.text = '';
+        render();
+      });
+    }
+    var toneSelect = document.getElementById('d-tone');
+    if (toneSelect) {
+      toneSelect.addEventListener('change', function () {
+        state.draft.tone = this.value;
+      });
+    }
+  }
+
+  function handleAction(action, el, ev) {
+    if (ev && (action === 'close-modal-overlay' || action === 'close-template-modal-overlay')) {
+      if (ev.target !== el) return; // only close when clicking the overlay itself, not the modal content
+    }
+
+    switch (action) {
+      case 'set-view':
+        state.view = el.getAttribute('data-view');
+        render();
+        break;
+
+      case 'add-job':
+        state.modalJob = { id: uid(), title: '', client: '', rate: '', rateType: 'fixed', status: 'saved', dateAdded: new Date().toISOString().slice(0, 10), jobPost: '', notes: '', link: '' };
+        render();
+        break;
+
+      case 'edit-job': {
+        var id = el.getAttribute('data-id');
+        var job = state.jobs.find(function (j) { return j.id === id; });
+        if (job) { state.modalJob = Object.assign({}, job); render(); }
+        break;
+      }
+
+      case 'close-modal':
+      case 'close-modal-overlay':
+        state.modalJob = null;
+        render();
+        break;
+
+      case 'save-job': {
+        var form = {
+          id: el.getAttribute('data-id'),
+          title: document.getElementById('f-title').value,
+          client: document.getElementById('f-client').value,
+          status: document.getElementById('f-status').value,
+          rate: document.getElementById('f-rate').value,
+          rateType: document.getElementById('f-rateType').value,
+          jobPost: document.getElementById('f-jobPost').value,
+          notes: document.getElementById('f-notes').value,
+          dateAdded: (state.modalJob && state.modalJob.dateAdded) || new Date().toISOString().slice(0, 10)
+        };
+        var existingIdx = state.jobs.findIndex(function (j) { return j.id === form.id; });
+        var wasEdit = existingIdx !== -1;
+        if (wasEdit) state.jobs[existingIdx] = form;
+        else state.jobs.push(form);
+        persistJobs();
+        state.modalJob = null;
+        showToast(wasEdit ? 'Job updated' : 'Job added to pipeline');
+        break;
+      }
+
+      case 'delete-job': {
+        var delId = el.getAttribute('data-id');
+        state.jobs = state.jobs.filter(function (j) { return j.id !== delId; });
+        persistJobs();
+        state.modalJob = null;
+        showToast('Job deleted');
+        break;
+      }
+
+      case 'generate-draft':
+        generateDraft();
+        render();
+        break;
+
+      case 'copy-draft':
+        copyText(state.draft.text);
+        showToast('Copied to clipboard');
+        break;
+
+      case 'new-template':
+        state.editingTemplate = { id: uid(), tag: '', title: '', body: '' };
+        render();
+        break;
+
+      case 'edit-template': {
+        var tid = el.getAttribute('data-id');
+        var tmpl = state.templates.find(function (t) { return t.id === tid; });
+        if (tmpl) { state.editingTemplate = Object.assign({}, tmpl); render(); }
+        break;
+      }
+
+      case 'close-template-modal':
+      case 'close-template-modal-overlay':
+        state.editingTemplate = null;
+        render();
+        break;
+
+      case 'save-template': {
+        var tform = {
+          id: el.getAttribute('data-id'),
+          tag: document.getElementById('t-tag').value,
+          title: document.getElementById('t-title').value,
+          body: document.getElementById('t-body').value
+        };
+        var tIdx = state.templates.findIndex(function (t) { return t.id === tform.id; });
+        if (tIdx !== -1) { state.templates[tIdx] = tform; showToast('Template updated'); }
+        else { state.templates.push(tform); showToast('Template saved'); }
+        persistTemplates();
+        state.editingTemplate = null;
+        break;
+      }
+
+      case 'delete-template': {
+        var dtid = el.getAttribute('data-id');
+        state.templates = state.templates.filter(function (t) { return t.id !== dtid; });
+        persistTemplates();
+        showToast('Template deleted');
+        break;
+      }
+
+      case 'copy-template': {
+        var ctid = el.getAttribute('data-id');
+        var ctmpl = state.templates.find(function (t) { return t.id === ctid; });
+        if (ctmpl) { copyText(ctmpl.body); showToast('Copied to clipboard'); }
+        break;
+      }
+    }
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).catch(function () { fallbackCopy(text); });
+    } else {
+      fallbackCopy(text);
+    }
+  }
+  function fallbackCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) { /* ignore */ }
+    document.body.removeChild(ta);
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
